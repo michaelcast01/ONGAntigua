@@ -14,8 +14,41 @@ function parsePagination(query) {
 
 router.get('/', asyncHandler(async (req, res) => {
   const { page, limit, offset } = parsePagination(req.query);
+  const filters = [];
+  const params = [];
 
-  const [[totalRow]] = await pool.query('SELECT COUNT(*) AS total FROM entrega_ayuda');
+  if (req.query.q) {
+    filters.push('(b.nombres LIKE ? OR b.documento LIKE ? OR b.correo LIKE ?)');
+    params.push(`%${req.query.q}%`, `%${req.query.q}%`, `%${req.query.q}%`);
+  }
+
+  if (req.query.cityId) {
+    filters.push('e.id_municipio_entrega = ?');
+    params.push(Number(req.query.cityId));
+  }
+
+  if (req.query.populationTypeId) {
+    filters.push('b.id_tipo_poblacion = ?');
+    params.push(Number(req.query.populationTypeId));
+  }
+
+  if (req.query.helpTypeId) {
+    filters.push('e.id_tipo_ayuda = ?');
+    params.push(Number(req.query.helpTypeId));
+  }
+
+  const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+
+  const [[totalRow]] = await pool.query(
+    `
+      SELECT COUNT(*) AS total
+      FROM entrega_ayuda e
+      INNER JOIN beneficiario b ON b.id_beneficiario = e.id_beneficiario
+      ${whereClause}
+    `,
+    params
+  );
+
   const [rows] = await pool.query(
     `
       SELECT
@@ -41,10 +74,11 @@ router.get('/', asyncHandler(async (req, res) => {
       INNER JOIN departamento d ON d.id_departamento = m.id_departamento
       INNER JOIN colaborador co ON co.id_colaborador = e.id_colaborador
       INNER JOIN tipo_ayuda ta ON ta.id_tipo_ayuda = e.id_tipo_ayuda
+      ${whereClause}
       ORDER BY e.id_entrega DESC
       LIMIT ? OFFSET ?
     `,
-    [limit, offset]
+    [...params, limit, offset]
   );
 
   res.json({

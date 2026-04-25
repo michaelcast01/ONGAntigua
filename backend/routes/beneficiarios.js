@@ -39,6 +39,21 @@ router.get('/', asyncHandler(async (req, res) => {
     params.push(Number(req.query.cityId));
   }
 
+   if (req.query.populationTypeId) {
+    filters.push('b.id_tipo_poblacion = ?');
+    params.push(Number(req.query.populationTypeId));
+  }
+
+  if (req.query.helpTypeId) {
+    filters.push(`EXISTS (
+      SELECT 1
+      FROM entrega_ayuda e
+      WHERE e.id_beneficiario = b.id_beneficiario
+        AND e.id_tipo_ayuda = ?
+    )`);
+    params.push(Number(req.query.helpTypeId));
+  }
+
   const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
 
   const [[totalRow]] = await pool.query(

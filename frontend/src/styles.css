@@ -188,12 +188,20 @@ textarea {
 
 .inline-search {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
-  width: min(420px, 100%);
+  width: min(100%, 920px);
+}
+
+.inline-search input,
+.inline-search select {
+  flex: 1 1 180px;
 }
 
 .search-actions {
   display: flex;
+  flex: 0 0 auto;
   gap: 10px;
 }
 

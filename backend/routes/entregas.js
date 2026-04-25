@@ -18,7 +18,7 @@ router.get('/', asyncHandler(async (req, res) => {
   const params = [];
 
   if (req.query.q) {
-    filters.push('(b.nombres LIKE ? OR b.documento LIKE ? OR b.correo LIKE ?)');
+    filters.push('(LOWER(b.nombres) LIKE LOWER(?) OR LOWER(b.documento) LIKE LOWER(?) OR LOWER(b.correo) LIKE LOWER(?))');
     params.push(`%${req.query.q}%`, `%${req.query.q}%`, `%${req.query.q}%`);
   }
 

@@ -77,7 +77,13 @@ router.get('/', asyncHandler(async (req, res) => {
         d.codigo_dane_departamento,
         d.nombre_departamento AS nombre_region,
         b.id_tipo_poblacion,
-        tp.nombre_tipo
+        tp.nombre_tipo,
+        (
+          SELECT STRING_AGG(DISTINCT ta.nombre_ayuda, ', ' ORDER BY ta.nombre_ayuda)
+          FROM entrega_ayuda e
+          INNER JOIN tipo_ayuda ta ON ta.id_tipo_ayuda = e.id_tipo_ayuda
+          WHERE e.id_beneficiario = b.id_beneficiario
+        ) AS tipos_ayuda
       FROM beneficiario b
       LEFT JOIN municipio m ON m.id_municipio = b.id_municipio
       LEFT JOIN departamento d ON d.id_departamento = m.id_departamento

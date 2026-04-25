@@ -257,11 +257,12 @@ onMounted(async () => {
                 <th>Documento</th>
                 <th>Ciudad</th>
                 <th>Tipo poblacion</th>
+                <th>Tipos de ayuda</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="!beneficiaries.length">
-                <td colspan="5">No se encontraron beneficiarios para la consulta realizada.</td>
+                <td colspan="6">No se encontraron beneficiarios para la consulta realizada.</td>
               </tr>
               <tr v-for="item in beneficiaries" :key="item.id_beneficiario">
                 <td>{{ item.id_beneficiario }}</td>
@@ -269,6 +270,7 @@ onMounted(async () => {
                 <td>{{ item.documento }}</td>
                 <td>{{ item.nombre_ciudad }}</td>
                 <td>{{ item.nombre_tipo }}</td>
+                <td>{{ item.tipos_ayuda || 'Sin entregas registradas' }}</td>
               </tr>
             </tbody>
           </table>

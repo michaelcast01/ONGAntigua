@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../services/api'
 
@@ -32,6 +32,8 @@ const lastFilters = reactive({
   helpTypeId: ''
 })
 const beneficiaryTotal = ref(0)
+const currentPage = ref(1)
+const itemsPerPage = 20
 const loading = ref(false)
 const error = ref('')
 const success = ref('')
@@ -41,8 +43,24 @@ function clearMessages() {
   success.value = ''
 }
 
-function buildSearchParams(limit) {
-  const params = new URLSearchParams({ limit: String(limit) })
+async function loadBeneficiaries(page = 1) {
+  loading.value = true
+  clearMessages()
+
+  try {
+    const beneficiariesResponse = await api.getBeneficiarios(`?${buildSearchParams(itemsPerPage, page).toString()}`)
+    beneficiaries.value = beneficiariesResponse.data
+    beneficiaryTotal.value = beneficiariesResponse.pagination.total
+    currentPage.value = page
+  } catch (err) {
+    error.value = err.message
+  } finally {
+    loading.value = false
+  }
+}
+
+function buildSearchParams(limit, page = 1) {
+  const params = new URLSearchParams({ limit: String(limit), page: String(page) })
 
   if (lastFilters.query) {
     params.set('q', lastFilters.query)
@@ -74,7 +92,7 @@ async function loadDashboard() {
     ]
 
     if (hasSearched.value) {
-      requests.push(api.getBeneficiarios(`?${buildSearchParams(20).toString()}`))
+      requests.push(api.getBeneficiarios(`?${buildSearchParams(itemsPerPage, currentPage.value).toString()}`))
     }
 
     const [summaryResponse, deliveriesResponse, beneficiariesResponse] = await Promise.all(requests)
@@ -127,6 +145,7 @@ async function runSearch() {
     lastFilters.helpTypeId = ''
     beneficiaries.value = []
     beneficiaryTotal.value = 0
+    currentPage.value = 1
     error.value = 'Selecciona al menos un criterio para consultar.'
     return
   }
@@ -136,7 +155,8 @@ async function runSearch() {
   lastFilters.cityId = filters.cityId
   lastFilters.populationTypeId = filters.populationTypeId
   lastFilters.helpTypeId = filters.helpTypeId
-  await loadDashboard()
+  currentPage.value = 1
+  await loadBeneficiaries(1)
 }
 
 function clearSearch() {
@@ -151,12 +171,21 @@ function clearSearch() {
   lastFilters.helpTypeId = ''
   beneficiaries.value = []
   beneficiaryTotal.value = 0
+  currentPage.value = 1
   clearMessages()
 }
 
 function logout() {
   localStorage.removeItem('authToken')
   router.push('/')
+}
+
+const totalPages = computed(() => Math.ceil(beneficiaryTotal.value / itemsPerPage))
+
+function goToPage(page) {
+  if (page >= 1 && page <= totalPages.value) {
+    loadBeneficiaries(page)
+  }
 }
 
 onMounted(async () => {
@@ -274,6 +303,27 @@ onMounted(async () => {
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div v-if="hasSearched && beneficiaries.length > 0" class="pagination-controls">
+          <span class="pagination-info">Página {{ currentPage }} de {{ totalPages }}</span>
+          <div class="pagination-buttons">
+            <button 
+              class="pagination-button" 
+              :disabled="currentPage === 1"
+              @click="goToPage(currentPage - 1)"
+            >
+              Anterior
+            </button>
+            
+            <button
+              class="pagination-button"
+              :disabled="currentPage === totalPages"
+              @click="goToPage(currentPage + 1)"
+            >
+              Siguiente
+            </button>
+          </div>
         </div>
       </article>
 

@@ -1,6 +1,3 @@
-# Sistema de Ayudas Sociales
-
-Base inicial de un aplicativo web para la gestion de ayudas sociales. El proyecto toma como referencia la estructura general de `SISTEMA_DE_INF_ONG`, pero se adapta al modelo de datos `ayudas_sociales` enviado para MariaDB.
 
 ## Objetivo
 
